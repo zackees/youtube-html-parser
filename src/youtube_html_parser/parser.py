@@ -73,20 +73,28 @@ def parse_out_up_next_videos(soup: BeautifulSoup) -> list[str]:
         secondary_div = soup.find(
             "div", {"id": "secondary", "class": "ytd-watch-flexy"}
         )
+        assert secondary_div is not None, "Could not find secondary div."
         # now within this is div id="related"
         related_div = secondary_div.find("div", {"id": "related"})
+        assert related_div is not None, "Could not find related div."
         # ytd-watch-next-secondary-results-renderer
         ytd_watch_container = related_div.find(
             "ytd-watch-next-secondary-results-renderer"
         )
+        assert ytd_watch_container is not None, "Could not find watch next container."
         items = ytd_watch_container.find_all("ytd-compact-video-renderer")
+        assert items is not None, "Could not find items."
         for item in items:
             try:
                 a_tag = item.find("a", {"id": "thumbnail"})
+                assert a_tag is not None, "Could not find a tag."
                 href = a_tag["href"]
                 video_id = href.split("=")[-1]
                 if video_id is not None:
                     video_ids.append(video_id)
+            except AssertionError as e:
+                warnings.warn(f"Error: {e}")
+                raise e
             except FeatureNotFound as e:
                 warnings.warn(f"Error: {e}")
             except KeyError as e:
@@ -99,6 +107,9 @@ def parse_out_up_next_videos(soup: BeautifulSoup) -> list[str]:
                 break
             except Exception as e:  # pylint: disable=broad-except
                 warnings.warn(f"Error: {e}")
+    except AssertionError as e:
+        warnings.warn(f"Error: {e}")
+        raise e
     except FeatureNotFound as e:  # pylint: disable=broad-except
         warnings.warn(f"Error: {e}")
     except AttributeError as e:
@@ -126,10 +137,13 @@ def parse_channel_url(html: str) -> str | None:
 def parse_title(soup: BeautifulSoup) -> str:
     """Parse the title of the video."""
     title_div = soup.find("player-microformat-renderer")
+    assert title_div is not None, "Could not find title div."
     # <script type="application/ld+json">
     script = title_div.find("script", type="application/ld+json")
+    assert script is not None, "Could not find script tag."
     json_data = json.loads(script.get_text())
     title = json_data.get("name")
+    assert title is not None, "Could not find title."
     return title
 
 
