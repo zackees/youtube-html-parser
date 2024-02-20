@@ -2,13 +2,18 @@ import unittest
 import subprocess
 import time
 import requests
+import sys
+
+PYTHON_EXE = sys.executable
 
 class TestSimpleHTTPServer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Start the HTTP server as a separate process
-        cls.server_process = subprocess.Popen(['python', '-m', 'youtube_html_parser.web'])
+        cls.server_process = subprocess.Popen([PYTHON_EXE, '-m', 'youtube_html_parser.web'])
         time.sleep(1)  # Wait a bit for the server to start
+        if cls.server_process.poll() is not None:
+            raise RuntimeError('Failed to start the HTTP server')
 
     @classmethod
     def tearDownClass(cls):
