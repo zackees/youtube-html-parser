@@ -21,7 +21,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 # Convert parsed data to JSON
                 json_str = parsed_data.serialize()
                 # parsed_json = parsed_data.to_json()  # Make sure your parse_yt_page returns an object with a to_json() method or adjust accordingly
-                response.write(json_str)
+                response.write(json_str.encode("utf-8"))
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
@@ -39,7 +39,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
 
 def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, port=8000):
-    server_address = ("", port)
+    server_address = ("127.0.0.1", port)
     httpd = server_class(server_address, handler_class)
     print(f"Starting httpd on port {port}...")
     httpd.serve_forever()
