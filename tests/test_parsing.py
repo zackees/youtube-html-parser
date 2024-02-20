@@ -9,11 +9,11 @@ import unittest
 from pathlib import Path
 
 from youtube_html_parser.parser import (
+    ParsedYtPage,
     create_soup,
     parse_out_self_video_ids,
     parse_out_up_next_videos,
     parse_yt_page,
-    ParsedYtPage
 )
 
 HERE = Path(__file__).parent
@@ -52,7 +52,9 @@ class ParseTester(unittest.TestCase):
         parsed = parse_yt_page(test_html)
         self.assertIsInstance(parsed, ParsedYtPage)
         print(parsed)
-
+        print(parsed.video_url())
+        print(parsed.channel_url())
+        print()
 
     def test_parse_performane(self) -> None:
         """Test the performance of parsing."""
