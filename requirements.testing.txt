@@ -7,3 +7,4 @@ pytest
 tox
 ruff
 pytest-xdist
+requests
