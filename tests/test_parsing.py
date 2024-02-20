@@ -1,15 +1,18 @@
+# pylint: disable=too-many-branches
+
 """
 Unit test file.
 """
-from pathlib import Path
-from bs4 import BeautifulSoup
-# import beautiful soup exceptions
-from bs4 import FeatureNotFound
-import unittest
-import json
-import warnings
 
-import re
+import json
+import time
+import unittest
+import warnings
+from pathlib import Path
+
+# import beautiful soup exceptions
+from bs4 import BeautifulSoup, FeatureNotFound
+
 HERE = Path(__file__).parent
 DATA_DIR = HERE / "data"
 assert DATA_DIR.exists()
@@ -17,6 +20,7 @@ assert DATA_DIR.exists()
 TEST_HTML = list(DATA_DIR.glob("*.html"))
 # Filter out *.pretty.html files
 TEST_HTML = [file for file in TEST_HTML if not file.name.endswith(".pretty.html")]
+
 
 def parse_out_self_video_ids(soup: BeautifulSoup) -> list[str]:
     """Parse out the video URL from a self post."""
@@ -35,33 +39,48 @@ def parse_out_up_next_videos(soup: BeautifulSoup) -> list[str]:
     """Parse out the video URL from the up next videos."""
     video_ids: list[str] = []
     try:
-        # div id="secondary"
-        secondary_div = soup.find("div", {"id": "secondary", "class": "ytd-watch-flexy"})
+        secondary_div = soup.find(
+            "div", {"id": "secondary", "class": "ytd-watch-flexy"}
+        )
         # now within this is div id="related"
         related_div = secondary_div.find("div", {"id": "related"})
         # ytd-watch-next-secondary-results-renderer
-        ytd_watch_container = related_div.find("ytd-watch-next-secondary-results-renderer")
-        # print(ytd_watch)
+        ytd_watch_container = related_div.find(
+            "ytd-watch-next-secondary-results-renderer"
+        )
         items = ytd_watch_container.find_all("ytd-compact-video-renderer")
         for item in items:
             try:
-                # get the <a id="thumbnail"
                 a_tag = item.find("a", {"id": "thumbnail"})
                 href = a_tag["href"]
                 video_id = href.split("=")[-1]
-                video_ids.append(video_id)
-            except FeatureNotFound as e:  # pylint: disable=broad-except
+                if video_id is not None:
+                    video_ids.append(video_id)
+            except FeatureNotFound as e:
                 warnings.warn(f"Error: {e}")
-
-        # now within this is div id="related"
-        #related_div = secondary_div.find("div", {"id": "related"})
-        #print(related_div)
-        # ytd-watch-next-secondary-results-renderer
-        #ytd_watch = secondary_div.find("ytd-watch-next-secondary-results-renderer")
-        #print(ytd_watch)
+            except KeyError as e:
+                warnings.warn(f"Error: {e}")
+            except AttributeError as e:
+                warnings.warn(f"Error: {e}")
+            except KeyboardInterrupt:
+                break
+            except SystemExit:
+                break
+            except Exception as e:  # pylint: disable=broad-except
+                warnings.warn(f"Error: {e}")
     except FeatureNotFound as e:  # pylint: disable=broad-except
         warnings.warn(f"Error: {e}")
+    except AttributeError as e:
+        warnings.warn(f"Error: {e}")
+    except KeyError as e:
+        warnings.warn(f"Error: {e}")
+    except KeyboardInterrupt:
+        pass
+    except SystemExit:
+        pass
+
     return video_ids
+
 
 class ParseTester(unittest.TestCase):
     """Main tester class."""
@@ -83,6 +102,20 @@ class ParseTester(unittest.TestCase):
         print(f"Found {len(video_ids)} video ids.")
         print(video_ids)
 
+    def test_parse_performane(self) -> None:
+        """Test the performance of parsing."""
+        start = time.time()
+        for html_file in TEST_HTML:
+            test_html = html_file.read_text(encoding="utf-8")
+            soup = BeautifulSoup(test_html, "html.parser")
+            _ = parse_out_up_next_videos(soup)
+            # print(f"Found {len(video_ids)} video ids.")
+            # print(video_ids)
+        end = time.time()
+        diff = end - start
+        # print(f"Time taken: {end - start}")
+        # self.assertLess(diff, 5)
+        print(f"Time taken: {diff}")
 
 
 if __name__ == "__main__":
