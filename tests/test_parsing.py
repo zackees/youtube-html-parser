@@ -2,6 +2,7 @@
 Unit test file.
 """
 from pathlib import Path
+from bs4 import BeautifulSoup
 import unittest
 
 HERE = Path(__file__).parent
@@ -18,9 +19,11 @@ class ParseTester(unittest.TestCase):
 
     def test_loading(self) -> None:
         """Test command line interface (CLI)."""
-        data: dict[Path, str] = {}
+        data: dict[Path, BeautifulSoup] = {}
         for test_html in TEST_HTML:
-            data[test_html] = test_html.read_text(encoding="utf-8")
+            with open(test_html, "r", encoding="utf-8") as file:
+                soup = BeautifulSoup(file, "html.parser")
+                data[test_html] = soup
         self.assertTrue(data)
             
 
