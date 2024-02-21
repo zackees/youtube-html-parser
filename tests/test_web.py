@@ -4,6 +4,8 @@ import time
 import unittest
 from pathlib import Path
 
+import concurrent.futures
+
 import requests
 
 PYTHON_EXE = sys.executable
@@ -34,19 +36,41 @@ class TestSimpleHTTPServer(unittest.TestCase):
         cls.server_process.terminate()
         cls.server_process.wait()
 
+    def post_html_content(self, html_content):
+        """Function to send a POST request with HTML content."""
+        response = requests.post("http://127.0.0.1:8000", data={"html": html_content})
+        return response
+
     def test_post_html_content(self):
         # The HTML content to test
-        html_content = TEST_HTML[0].read_text(encoding="utf-8")
-        # Send a POST request to the server with the HTML content
+        html_contents = [html_file.read_text(encoding="utf-8") for html_file in TEST_HTML]  # Assuming you want to use up to 16 HTML files
+        html = html_contents[0]
+
+        # Record the start time
         start = time.time()
-        response = requests.post("http://127.0.0.1:8000", data={"html": html_content})
+
+        num_requests = 8
+
+        # Use ThreadPoolExecutor to post HTML content concurrently
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+            # Submit all POST requests and get Future objects
+            future_to_html = {executor.submit(self.post_html_content, html): html for i in range(num_requests)}
+
+            # Wait for the futures to complete and validate the responses
+            for future in concurrent.futures.as_completed(future_to_html):
+                html = future_to_html[future]
+                try:
+                    response = future.result()
+                    # Check that the response is OK
+                    self.assertEqual(
+                        response.status_code, 200, f"Response for {html[:30]}...: {response.content.decode('utf-8')}"
+                    )
+                except Exception as exc:
+                    self.fail(f"HTML content generated an exception: {exc}")
+
+        # Print the total time taken
         diff = time.time() - start
-        print(f"Time: {diff}")
-        # Check that the response is OK
-        self.assertEqual(
-            response.status_code, 200, f"Response: {response.content.decode('utf-8')}"
-        )
-        # Add more assertions here to validate the response content
+        print(f"Total time for {num_requests} requests: {diff}")
 
     @unittest.skip("Not implemented yet.")
     def test_post_without_html_content(self):
