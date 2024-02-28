@@ -40,18 +40,19 @@ def fetch_channel_id_ytdlp(video_url: str) -> ChannelId:
     raise RuntimeError(f"Could not find channel id in: {video_url} using yt-dlp.")
 
 
-def fetch_videos_from_channel(channel_id: ChannelId) -> list[VideoId]:
+def fetch_videos_from_channel(channel_url: str) -> list[VideoId]:
     """Fetch the videos from a channel."""
     # yt-dlp -J "CHANNEL_URL" > channel_info.json
     # cmd = f'yt-dlp -i --get-id "https://www.youtube.com/channel/{channel_id}"'
-    cmd_list = [
-        "yt-dlp",
-        "--print",
-        "id",
-        f"https://www.youtube.com/channel/{channel_id}",
-    ]
+    cmd_list = ["yt-dlp", "--print", "id", channel_url]
+    cms_str = subprocess.list2cmdline(cmd_list)
+    print(f"Running: {cms_str}")
     completed_proc = subprocess.run(
-        cmd_list, capture_output=True, text=True, timeout=10, shell=True, check=True
+        cmd_list,
+        capture_output=True,
+        text=True,
+        shell=True,
+        check=True,
     )
     stdout = completed_proc.stdout
     lines = stdout.splitlines()
@@ -67,3 +68,9 @@ def fetch_videos_from_channel(channel_id: ChannelId) -> list[VideoId]:
             continue
         out_channel_ids.append(VideoId(line))
     return out_channel_ids
+
+
+def fetch_videos_from_youtube_channel(channel_id: str) -> list[VideoId]:
+    """Fetch the videos from a youtube channel."""
+    channel_url = f"https://www.youtube.com/channel/{channel_id}"
+    return fetch_videos_from_channel(channel_url)
