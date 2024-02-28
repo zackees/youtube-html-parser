@@ -14,13 +14,17 @@ class VideoId(str):
     pass
 
 
+class ChannelId(str):
+    pass
+
+
 @dataclass
 class ParsedYtPage:
     """Dataclass to hold the parsed data."""
 
     video_id: VideoId
     title: str
-    channel_id: str
+    channel_id: ChannelId
     up_next_video_ids: list[VideoId]
 
     def video_url(self) -> str:
@@ -128,13 +132,13 @@ def parse_out_up_next_videos(soup: BeautifulSoup) -> list[VideoId]:
     return video_ids
 
 
-def parse_channel_url(html: str) -> str | None:
+def parse_channel_url(html: str) -> ChannelId | None:
     """Parse the channel URL."""
     # href="/channel/UCu2uabLB7WHhkhdcLV5BcZg/videos"
     match = re.search(r'href="/channel/([^/]+)/about"', html)
     if match:
         out: str = str(match.group(1))
-        return out
+        return ChannelId(out)
     return None
 
 
