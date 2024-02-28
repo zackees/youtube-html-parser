@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 
 from youtube_html_parser.parser import (
-    ParsedYtPage,
+    YtPage,
     create_soup,
     parse_out_self_video_ids,
     parse_out_up_next_videos,
@@ -60,7 +60,7 @@ class ParseTester(unittest.TestCase):
         """Test the parse_yt_page function."""
         test_html = TEST_HTML[0].read_text(encoding="utf-8")
         parsed = parse_yt_page(test_html)
-        self.assertIsInstance(parsed, ParsedYtPage)
+        self.assertIsInstance(parsed, YtPage)
         print(parsed)
         print(parsed.video_url())
         print(parsed.channel_url())
@@ -73,7 +73,7 @@ class ParseTester(unittest.TestCase):
         """Test the up next channel ids."""
         test_html = TEST_HTML[0].read_text(encoding="utf-8")
         parsed = parse_yt_page(test_html)
-        parsed.fetch_up_next_channels()
+        parsed.resolve_up_next_video_channels()
         for video_id, channel_id in parsed.up_next_videos.items():
             print(f"{video_id}: {channel_id}")
             self.assertIsNotNone(channel_id)
