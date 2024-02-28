@@ -2,34 +2,16 @@
 
 import json
 import re
-import traceback
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import requests
-
 # import beautiful soup exceptions
 from bs4 import BeautifulSoup, FeatureNotFound
 
-
-class VideoId(str):
-    pass
-
-
-class ChannelId(str):
-    pass
-
-
-def channel_to_url(channel_id: ChannelId) -> str:
-    """Convert the channel id to a URL."""
-    return f"https://www.youtube.com/channel/{channel_id}"
-
-
-def video_to_url(video_id: VideoId) -> str:
-    """Convert the video id to a URL."""
-    return f"https://www.youtube.com/watch?v={video_id}"
+from youtube_html_parser.fetch import resolve_channel_ids
+from youtube_html_parser.types import ChannelId, VideoId, channel_to_url, video_to_url
 
 
 @dataclass
@@ -82,15 +64,7 @@ class ParsedYtPage:
 
     def fetch_up_next_channels(self) -> None:
         """Fetch the channel id for the parsed video ids."""
-        for video_id, channel_id in self.up_next_videos.items():
-            if channel_id is not None:
-                continue
-            try:
-                channel_id = fetch_channel_id(video_id)
-                self.up_next_videos[video_id] = channel_id
-            except requests.HTTPError as http_err:
-                traceback_str = traceback.format_exc()
-                warnings.warn(f"HTTP error occurred: {http_err}\n\n{traceback_str}")
+        self.up_next_videos = resolve_channel_ids(self.up_next_videos)
 
 
 def parse_out_self_video_ids(soup: BeautifulSoup) -> list[VideoId]:
@@ -180,18 +154,6 @@ def parse_channel_id2(html: str) -> ChannelId | None:
         out: str = str(match.group(1))
         return ChannelId(out)
     return None
-
-
-def fetch_channel_id(vidid: VideoId) -> ChannelId | None:
-    """Fetches the channel url from the video id, raises HTTPError if http error."""
-    url = video_to_url(vidid)
-    response = requests.get(url, timeout=60)
-    response.raise_for_status()
-    # print(response.text)
-    dbg_out_file = Path("debug.html")
-    dbg_out_file.write_text(response.text, encoding="utf-8")
-    out = parse_channel_id2(response.text)
-    return out
 
 
 def parse_title(soup: BeautifulSoup) -> str:
