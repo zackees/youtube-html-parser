@@ -5,6 +5,7 @@ import re
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 # import beautiful soup exceptions
 from bs4 import BeautifulSoup, FeatureNotFound
@@ -25,7 +26,7 @@ class ParsedYtPage:
     video_id: VideoId
     title: str
     channel_id: ChannelId
-    up_next_video_ids: list[VideoId]
+    up_next_videos: dict[VideoId, ChannelId | None]
 
     def video_url(self) -> str:
         """Return the video URL."""
@@ -35,25 +36,25 @@ class ParsedYtPage:
         """Return the channel URL."""
         return f"https://www.youtube.com/channel/{self.channel_id}"
 
-    def up_next_videos(self) -> list[str]:
+    def up_next_videos_urls(self) -> dict[str, None]:
         """Return the up next videos."""
-        return [
-            f"https://www.youtube.com/watch?v={video_id}"
-            for video_id in self.up_next_video_ids
-        ]
+        return {
+            f"https://www.youtube.com/watch?v={video_id}": None
+            for video_id in self.up_next_videos.keys()
+        }
 
     def serialize(self) -> str:
         """Serialize the data."""
-        out = {
+        out: dict[str, Any] = {
             "video_id": self.video_id,
             "title": self.title,
             "channel_id": self.channel_id,
-            "up_next_video_ids": self.up_next_video_ids,
+            "up_next_video_ids": list(self.up_next_videos.keys()),
         }
         # extend to include the URLs
         out["video_url"] = self.video_url()
         out["channel_url"] = self.channel_url()
-        out["up_next_video_urls"] = self.up_next_videos()
+        out["up_next_video_urls"] = self.up_next_videos_urls()
         return json.dumps(out, indent=2)
 
     def write_json(self, outfile: Path) -> None:
@@ -170,9 +171,13 @@ def parse_yt_page(html: str) -> ParsedYtPage:
     assert channel_id is not None, "Could not find channel id."
     assert title is not None, "Could not find title."
 
+    up_next_videos: dict[VideoId, ChannelId | None] = {}
+    for video_id in up_next_video_ids:
+        up_next_videos[video_id] = None
+
     return ParsedYtPage(
         video_id=video_ids[0],
         title=title,
         channel_id=channel_id,
-        up_next_video_ids=up_next_video_ids,
+        up_next_videos=up_next_videos,
     )
