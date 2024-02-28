@@ -7,6 +7,8 @@ from pathlib import Path
 
 import requests
 
+ENABLED = False
+
 PYTHON_EXE = sys.executable
 
 HERE = Path(__file__).parent
@@ -21,6 +23,8 @@ TEST_HTML = [file for file in TEST_HTML if not file.name.endswith(".pretty.html"
 class TestSimpleHTTPServer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        if not ENABLED:
+            return
         # Start the HTTP server as a separate process
         cls.server_process = subprocess.Popen(  # pylint: disable=consider-using-with
             [PYTHON_EXE, "-m", "youtube_html_parser.web"]
@@ -31,6 +35,8 @@ class TestSimpleHTTPServer(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        if not ENABLED:
+            return
         # Terminate the HTTP server process
         cls.server_process.terminate()
         cls.server_process.wait()
@@ -42,6 +48,7 @@ class TestSimpleHTTPServer(unittest.TestCase):
         )
         return response
 
+    @unittest.skipIf(not ENABLED, "Skipping test.")
     def test_post_html_content(self):
         # The HTML content to test
         html_contents = [

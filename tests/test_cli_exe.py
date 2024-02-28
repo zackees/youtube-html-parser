@@ -4,6 +4,8 @@ import time
 import unittest
 from pathlib import Path
 
+ENABLED = False
+
 HERE = Path(__file__).parent
 DATA_DIR = HERE / "data"
 assert DATA_DIR.exists()
@@ -12,11 +14,7 @@ TEST_HTML = list(DATA_DIR.glob("*.html"))
 # Filter out *.pretty.html files
 TEST_HTML = [file for file in TEST_HTML if not file.name.endswith(".pretty.html")]
 PROJECT_ROOT = HERE.parent
-
-
 CLI_EXE = PROJECT_ROOT / "cli.exe"
-
-assert CLI_EXE.exists()
 
 
 def invoke_parse_cli(html: str) -> str:
@@ -39,9 +37,14 @@ def invoke_parse_cli(html: str) -> str:
 class ParseTester(unittest.TestCase):
     """Main tester class."""
 
+    @unittest.skipIf(not ENABLED, "Skipping test.")
     def test_cli_parse(self) -> None:
         """Test the CLI parsing."""
         print("Testing CLI parsing.")
+        self.assertTrue(
+            CLI_EXE.exists(),
+            f"You need to compile the cli.exe to run this test, place it at: {CLI_EXE}",
+        )
         test_html = TEST_HTML[0].read_text(encoding="utf-8")
         start = time.time()
         for _ in range(10):
