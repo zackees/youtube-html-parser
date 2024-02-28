@@ -1,9 +1,10 @@
+# pylint: disable=import-outside-toplevel
+
 import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from youtube_html_parser.fetch import resolve_channel_ids
 from youtube_html_parser.types import ChannelId, VideoId, channel_to_url, video_to_url
 
 
@@ -57,4 +58,6 @@ class YtPage:
 
     def resolve_up_next_video_channels(self) -> None:
         """Fetch the channel id for the parsed video ids."""
+        from youtube_html_parser.fetch import resolve_channel_ids
+
         self.up_next_videos = resolve_channel_ids(self.up_next_videos)
