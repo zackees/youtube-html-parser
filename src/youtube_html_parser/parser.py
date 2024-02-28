@@ -36,12 +36,15 @@ class ParsedYtPage:
         """Return the channel URL."""
         return f"https://www.youtube.com/channel/{self.channel_id}"
 
-    def up_next_videos_urls(self) -> dict[str, None]:
+    def up_next_videos_urls(self) -> dict[str, str | None]:
         """Return the up next videos."""
-        return {
-            f"https://www.youtube.com/watch?v={video_id}": None
-            for video_id in self.up_next_videos.keys()
-        }
+        out: dict[str, str | None] = {}
+        for video_id, channel_id in self.up_next_videos.items():
+            channel_url: str | None = None
+            if channel_id is not None:
+                channel_url = f"https://www.youtube.com/channel/{channel_id}"
+            out[f"https://www.youtube.com/watch?v={video_id}"] = channel_url
+        return out
 
     def serialize(self) -> str:
         """Serialize the data."""
