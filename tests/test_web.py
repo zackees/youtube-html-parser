@@ -1,10 +1,9 @@
+import concurrent.futures
 import subprocess
 import sys
 import time
 import unittest
 from pathlib import Path
-
-import concurrent.futures
 
 import requests
 
@@ -23,7 +22,7 @@ class TestSimpleHTTPServer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Start the HTTP server as a separate process
-        cls.server_process = subprocess.Popen(
+        cls.server_process = subprocess.Popen(  # pylint: disable=consider-using-with
             [PYTHON_EXE, "-m", "youtube_html_parser.web"]
         )
         time.sleep(1)  # Wait a bit for the server to start
@@ -38,12 +37,16 @@ class TestSimpleHTTPServer(unittest.TestCase):
 
     def post_html_content(self, html_content):
         """Function to send a POST request with HTML content."""
-        response = requests.post("http://127.0.0.1:8000", data={"html": html_content})
+        response = requests.post(
+            "http://127.0.0.1:8000", data={"html": html_content}, timeout=60
+        )
         return response
 
     def test_post_html_content(self):
         # The HTML content to test
-        html_contents = [html_file.read_text(encoding="utf-8") for html_file in TEST_HTML]  # Assuming you want to use up to 16 HTML files
+        html_contents = [
+            html_file.read_text(encoding="utf-8") for html_file in TEST_HTML
+        ]  # Assuming you want to use up to 16 HTML files
         html = html_contents[0]
 
         # Record the start time
@@ -52,9 +55,12 @@ class TestSimpleHTTPServer(unittest.TestCase):
         num_requests = 8
 
         # Use ThreadPoolExecutor to post HTML content concurrently
-        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             # Submit all POST requests and get Future objects
-            future_to_html = {executor.submit(self.post_html_content, html): html for i in range(num_requests)}
+            future_to_html = {
+                executor.submit(self.post_html_content, html): html
+                for i in range(num_requests)
+            }
 
             # Wait for the futures to complete and validate the responses
             for future in concurrent.futures.as_completed(future_to_html):
@@ -63,9 +69,11 @@ class TestSimpleHTTPServer(unittest.TestCase):
                     response = future.result()
                     # Check that the response is OK
                     self.assertEqual(
-                        response.status_code, 200, f"Response for {html[:30]}...: {response.content.decode('utf-8')}"
+                        response.status_code,
+                        200,
+                        f"Response for {html[:30]}...: {response.content.decode('utf-8')}",
                     )
-                except Exception as exc:
+                except Exception as exc:  # pylint: disable=broad-except
                     self.fail(f"HTML content generated an exception: {exc}")
 
         # Print the total time taken
@@ -75,7 +83,7 @@ class TestSimpleHTTPServer(unittest.TestCase):
     @unittest.skip("Not implemented yet.")
     def test_post_without_html_content(self):
         # Send a POST request without HTML content
-        response = requests.post("http://127.0.0.1:8000")
+        response = requests.post("http://127.0.0.1:8000", timeout=60)
         # Check that the response indicates a bad request
         self.assertEqual(response.status_code, 400)
 

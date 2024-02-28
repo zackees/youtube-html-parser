@@ -1,13 +1,11 @@
-
+import subprocess
+import tempfile
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from io import BytesIO
 from pathlib import Path
-import subprocess
-import tempfile
 from urllib.parse import parse_qs
 
 from youtube_html_parser.parser import parse_yt_page
-
 
 HERE = Path(__file__).parent
 PROJECT_ROOT = HERE.parent.parent
@@ -37,6 +35,7 @@ def invoke_parse_cli(html: str) -> str:
         # read the output file
         out = outfile.read_text(encoding="utf-8")
         return out
+
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 

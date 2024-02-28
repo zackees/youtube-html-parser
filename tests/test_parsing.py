@@ -25,6 +25,14 @@ TEST_HTML = list(DATA_DIR.glob("*.html"))
 TEST_HTML = [file for file in TEST_HTML if not file.name.endswith(".pretty.html")]
 
 
+PROJECT_ROOT = HERE.parent
+
+
+def invoke_parse_py(html: str) -> str:
+    parsed_data = parse_yt_page(html)
+    return parsed_data.serialize()
+
+
 class ParseTester(unittest.TestCase):
     """Main tester class."""
 
@@ -58,18 +66,14 @@ class ParseTester(unittest.TestCase):
 
     def test_parse_performane(self) -> None:
         """Test the performance of parsing."""
+        print("Testing performance of parsing.")
+        test_html = TEST_HTML[0].read_text(encoding="utf-8")
         start = time.time()
-        for html_file in TEST_HTML:
-            test_html = html_file.read_text(encoding="utf-8")
-            soup = create_soup(test_html)
-            _ = parse_out_up_next_videos(soup)
-            # print(f"Found {len(video_ids)} video ids.")
-            # print(video_ids)
-        end = time.time()
-        diff = end - start
-        # print(f"Time taken: {end - start}")
-        # self.assertLess(diff, 5)
-        print(f"Time taken: {diff}")
+        for _ in range(10):
+            _ = invoke_parse_py(test_html)
+        # print(parsed_json)
+        dif = time.time() - start
+        print(f"Time taken: {dif}")
 
 
 if __name__ == "__main__":
