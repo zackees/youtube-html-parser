@@ -10,14 +10,18 @@ from pathlib import Path
 from bs4 import BeautifulSoup, FeatureNotFound
 
 
+class VideoId(str):
+    pass
+
+
 @dataclass
 class ParsedYtPage:
     """Dataclass to hold the parsed data."""
 
-    video_id: str
+    video_id: VideoId
     title: str
     channel_id: str
-    up_next_video_ids: list[str]
+    up_next_video_ids: list[VideoId]
 
     def video_url(self) -> str:
         """Return the video URL."""
@@ -53,22 +57,22 @@ class ParsedYtPage:
         outfile.write_text(self.serialize(), encoding="utf-8")
 
 
-def parse_out_self_video_ids(soup: BeautifulSoup) -> list[str]:
+def parse_out_self_video_ids(soup: BeautifulSoup) -> list[VideoId]:
     """Parse out the video URL from a self post."""
     content_div = soup.find("div", {"id": "content"}, class_="ytd-app")
-    video_ids: list[str] = []
+    video_ids: list[VideoId] = []
     ytwatch_flexy = content_div.find("ytd-watch-flexy")
     for script in ytwatch_flexy.find_all("script", type="application/ld+json"):
         json_data = json.loads(script.get_text())
         embed_url = json_data.get("embedUrl")
         video_id = embed_url.split("/")[-1]
-        video_ids.append(video_id)
+        video_ids.append(VideoId(video_id))
     return video_ids
 
 
-def parse_out_up_next_videos(soup: BeautifulSoup) -> list[str]:
+def parse_out_up_next_videos(soup: BeautifulSoup) -> list[VideoId]:
     """Parse out the video URL from the up next videos."""
-    video_ids: list[str] = []
+    video_ids: list[VideoId] = []
     try:
         secondary_div = soup.find(
             "div", {"id": "secondary", "class": "ytd-watch-flexy"}
@@ -91,7 +95,7 @@ def parse_out_up_next_videos(soup: BeautifulSoup) -> list[str]:
                 href = a_tag["href"]
                 video_id = href.split("=")[-1]
                 if video_id is not None:
-                    video_ids.append(video_id)
+                    video_ids.append(VideoId(video_id))
             except AssertionError as e:
                 warnings.warn(f"Error: {e}")
                 raise e
