@@ -121,12 +121,17 @@ def create_soup(html: str) -> BeautifulSoup:
 def parse_yt_page(html: str) -> YtPage:
     """Parse the YouTube page."""
     soup = create_soup(html)
-    title = parse_title(soup)
+    title: str | None = None
+    try:
+        title = parse_title(soup)
+    except AssertionError as e:
+        warnings.warn(f"Error: {e}")
+        title = "Unknown title."
     video_ids = parse_out_self_video_ids(soup)
     up_next_video_ids = parse_out_up_next_videos(soup)
     channel_id = parse_channel_url(html)
     assert channel_id is not None, "Could not find channel id."
-    assert title is not None, "Could not find title."
+    # assert title is not None, "Could not find title."
     up_next_videos: dict[VideoId, ChannelId | None] = {
         video_id: None for video_id in up_next_video_ids
     }
