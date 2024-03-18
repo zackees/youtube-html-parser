@@ -157,7 +157,14 @@ def parse_all_watchable_links(html: str) -> list[VideoId]:
 
     # now remove all watch?v= from the hrefs
     hrefs_out = [href.replace("watch?v=", "") for href in hrefs_out]
-    return [VideoId(video_id) for video_id in hrefs_out]
+    # make unique
+    hrefs_set = set([])
+    unique_href_out = []
+    for href in hrefs_out:
+        if href not in hrefs_set:
+            hrefs_set.add(href)
+            unique_href_out.append(href)
+    return [VideoId(video_id) for video_id in unique_href_out]
 
 
 def parse_yt_page_seach(html: str) -> YtPageSearch:
