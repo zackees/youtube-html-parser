@@ -11,7 +11,7 @@ def fetch_channel_url_ytdlp(video_url: str) -> str:
     cmd_list = [
         "yt-dlp",
         "--print",
-        'channel_url',
+        "channel_url",
         video_url,
     ]
     cmd_str = subprocess.list2cmdline(cmd_list)
