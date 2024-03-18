@@ -4,7 +4,6 @@
 Unit test file.
 """
 
-import time
 import unittest
 from pathlib import Path
 
@@ -65,17 +64,6 @@ class ParseTester(unittest.TestCase):
         print(parsed.video_url())
         print(parsed.channel_url())
         print()
-
-    def test_parse_performane(self) -> None:
-        """Test the performance of parsing."""
-        print("Testing performance of parsing.")
-        test_html = TEST_HTML[0].read_text(encoding="utf-8")
-        start = time.time()
-        for _ in range(10):
-            _ = invoke_parse_py(test_html)
-        # print(parsed_json)
-        dif = time.time() - start
-        print(f"Time taken: {dif}")
 
 
 if __name__ == "__main__":
