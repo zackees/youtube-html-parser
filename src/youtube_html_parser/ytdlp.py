@@ -11,11 +11,12 @@ def fetch_channel_url_ytdlp(video_url: str) -> str:
     cmd_list = [
         "yt-dlp",
         "--print",
-        "channel_url",
+        'channel_url',
         video_url,
     ]
+    cmd_str = subprocess.list2cmdline(cmd_list)
     completed_proc = subprocess.run(
-        cmd_list, capture_output=True, text=True, timeout=10, shell=True, check=True
+        cmd_str, capture_output=True, text=True, timeout=10, shell=True, check=True
     )
     if completed_proc.returncode != 0:
         stderr = completed_proc.stderr
