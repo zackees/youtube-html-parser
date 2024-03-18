@@ -263,4 +263,4 @@ def parse_all_watchable_links(html: str) -> list[VideoId]:
 def parse_yt_page_seach(html: str) -> YtPageSearch:
     """Parse the YouTube page."""
     video_ids = parse_all_watchable_links(html)
-    return YtPageSearch(videos=[VideoId(video_id) for video_id in video_ids])
+    return YtPageSearch(search_results=[VideoId(video_id) for video_id in video_ids])

@@ -12,17 +12,17 @@ from youtube_html_parser.types import VideoId, video_to_url
 class YtPageSearch:
     """Dataclass to hold the parsed data."""
 
-    videos: list[VideoId]
+    search_results: list[VideoId]
 
     def video_urls(self) -> list[str]:
         """Return the video URL."""
         # return f"https://www.youtube.com/watch?v={self.video_id}"
-        return [video_to_url(video_id) for video_id in self.videos]
+        return [video_to_url(video_id) for video_id in self.search_results]
 
     def serialize(self) -> str:
         """Serialize the data."""
         out: dict[str, Any] = {
-            "video_ids": self.videos,
+            "search_results": self.search_results,
         }
         return json.dumps(out, indent=2)
 
