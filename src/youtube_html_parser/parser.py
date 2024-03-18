@@ -132,15 +132,11 @@ def parse_yt_page(html: str) -> YtPage:
     up_next_video_ids = parse_out_up_next_videos(soup)
     channel_id = parse_channel_url(html)
     assert channel_id is not None, "Could not find channel id."
-    # assert title is not None, "Could not find title."
-    up_next_videos: dict[VideoId, ChannelId | None] = {
-        video_id: None for video_id in up_next_video_ids
-    }
     return YtPage(
         video_id=video_ids[0],
         title=title,
         channel_id=channel_id,
-        up_next_videos=up_next_videos,
+        up_next_videos=up_next_video_ids,
     )
 
 

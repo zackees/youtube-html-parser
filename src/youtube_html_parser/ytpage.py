@@ -15,7 +15,7 @@ class YtPage:
     video_id: VideoId
     title: str
     channel_id: ChannelId
-    up_next_videos: dict[VideoId, ChannelId | None]
+    up_next_videos: list[VideoId]
 
     def video_url(self) -> str:
         """Return the video URL."""
@@ -27,16 +27,9 @@ class YtPage:
         # return f"https://www.youtube.com/channel/{self.channel_id}"
         return channel_to_url(self.channel_id)
 
-    def up_next_videos_urls(self) -> dict[str, str | None]:
+    def up_next_videos_urls(self) -> list[str]:
         """Return the up next videos."""
-        out: dict[str, str | None] = {}
-        for video_id, channel_id in self.up_next_videos.items():
-            channel_url: str | None = None
-            if channel_id is not None:
-                # channel_url = f"https://www.youtube.com/channel/{channel_id}"
-                channel_url = channel_to_url(channel_id)
-            out[f"https://www.youtube.com/watch?v={video_id}"] = channel_url
-        return out
+        return [video_to_url(video_id) for video_id in self.up_next_videos]
 
     def serialize(self) -> str:
         """Serialize the data."""
@@ -44,7 +37,7 @@ class YtPage:
             "video_id": self.video_id,
             "title": self.title,
             "channel_id": self.channel_id,
-            "up_next_video_ids": list(self.up_next_videos.keys()),
+            "up_next_video_ids": self.up_next_videos,
         }
         # extend to include the URLs
         out["video_url"] = self.video_url()
@@ -55,9 +48,3 @@ class YtPage:
     def write_json(self, outfile: Path) -> None:
         """Write the data to a JSON file."""
         outfile.write_text(self.serialize(), encoding="utf-8")
-
-    def resolve_up_next_video_channels(self) -> None:
-        """Fetch the channel id for the parsed video ids."""
-        from youtube_html_parser.fetch import resolve_channel_ids
-
-        self.up_next_videos = resolve_channel_ids(self.up_next_videos)

@@ -66,18 +66,6 @@ class ParseTester(unittest.TestCase):
         print(parsed.channel_url())
         print()
 
-    @unittest.skipUnless(
-        ENABLE_FETCH_UP_NEXT_VIDEOS, "Only available for manual testing"
-    )
-    def test_upnext_channel_ids(self) -> None:
-        """Test the up next channel ids."""
-        test_html = TEST_HTML[0].read_text(encoding="utf-8")
-        parsed = parse_yt_page(test_html)
-        parsed.resolve_up_next_video_channels()
-        for video_id, channel_id in parsed.up_next_videos.items():
-            print(f"{video_id}: {channel_id}")
-            self.assertIsNotNone(channel_id)
-
     def test_parse_performane(self) -> None:
         """Test the performance of parsing."""
         print("Testing performance of parsing.")
