@@ -51,7 +51,7 @@ class ParseTester(unittest.TestCase):
         test_html = TEST_HTML[0].read_text(encoding="utf-8")
         # soup = BeautifulSoup(test_html, "lxml")
         soup = create_soup(test_html)
-        video_ids = parse_out_up_next_videos(soup)
+        video_ids = parse_out_up_next_videos(soup, test_html)
         print(f"Found {len(video_ids)} video ids.")
         print(video_ids)
 

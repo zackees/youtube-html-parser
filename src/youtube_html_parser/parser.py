@@ -11,22 +11,35 @@ from youtube_html_parser.types import ChannelId, VideoId
 from youtube_html_parser.ytpage import YtPage
 from youtube_html_parser.ytpagesearch import YtPageSearch
 
+RE_PATTERN_WATCHABLE_LINKS = re.compile(r"watch\?v=[\w-]+")
+
 
 def parse_out_self_video_ids(soup: BeautifulSoup) -> list[VideoId]:
     """Parse out the video URL from a self post."""
     content_div = soup.find("div", {"id": "content"}, class_="ytd-app")
+    assert (
+        content_div is not None
+    ), "Could not find content div while looking for self video id."
     video_ids: list[VideoId] = []
     ytwatch_flexy = content_div.find("ytd-watch-flexy")
+    assert (
+        ytwatch_flexy is not None
+    ), "Could not find ytwatch flexy while looking for self video id."
     for script in ytwatch_flexy.find_all("script", type="application/ld+json"):
         json_data = json.loads(script.get_text())
         embed_url = json_data.get("embedUrl")
         video_id = embed_url.split("/")[-1]
         video_ids.append(VideoId(video_id))
+    if not video_ids:
+        raise AssertionError("Could not find video ID from embedUrl.")
     return video_ids
 
 
-def parse_out_up_next_videos(soup: BeautifulSoup) -> list[VideoId]:
+def parse_out_up_next_videos_subtype1(
+    soup: BeautifulSoup, verbose=True
+) -> list[VideoId]:
     """Parse out the video URL from the up next videos."""
+    # This parser was known to work with modern videos.
     video_ids: list[VideoId] = []
     try:
         secondary_div = soup.find(
@@ -52,35 +65,102 @@ def parse_out_up_next_videos(soup: BeautifulSoup) -> list[VideoId]:
                 if video_id is not None:
                     video_ids.append(VideoId(video_id))
             except AssertionError as e:
-                warnings.warn(f"Error: {e}")
+                if verbose:
+                    warnings.warn(f"Error: {e}")
                 raise e
             except FeatureNotFound as e:
-                warnings.warn(f"Error: {e}")
+                if verbose:
+                    warnings.warn(f"Error: {e}")
             except KeyError as e:
-                warnings.warn(f"Error: {e}")
+                if verbose:
+                    warnings.warn(f"Error: {e}")
             except AttributeError as e:
-                warnings.warn(f"Error: {e}")
+                if verbose:
+                    warnings.warn(f"Error: {e}")
             except KeyboardInterrupt:
                 break
             except SystemExit:
                 break
             except Exception as e:  # pylint: disable=broad-except
-                warnings.warn(f"Error: {e}")
+                if verbose:
+                    warnings.warn(f"Error: {e}")
     except AssertionError as e:
-        warnings.warn(f"Error: {e}")
+        if verbose:
+            warnings.warn(f"Error: {e}")
         raise e
     except FeatureNotFound as e:  # pylint: disable=broad-except
-        warnings.warn(f"Error: {e}")
+        if verbose:
+            warnings.warn(f"Error: {e}")
     except AttributeError as e:
-        warnings.warn(f"Error: {e}")
+        if verbose:
+            warnings.warn(f"Error: {e}")
     except KeyError as e:
-        warnings.warn(f"Error: {e}")
+        if verbose:
+            warnings.warn(f"Error: {e}")
     except KeyboardInterrupt:
         pass
     except SystemExit:
         pass
 
     return video_ids
+
+
+def parse_out_up_next_videos_subtype2(
+    soup: BeautifulSoup, verbose=True
+) -> list[VideoId]:
+    """Used for older videos circa 2022"""
+    video_ids: list[VideoId] = []
+    try:
+        content_divs = soup.find_all(
+            "ytd-rich-grid-row", class_="ytd-rich-grid-renderer"
+        )
+        assert content_divs is not None, "Could not find content divs."
+        for content_div in content_divs:
+            a_hrefs = content_div.find_all("a", class_="yt-simple-endpoint")
+            assert a_hrefs is not None, "Could not find hrefs."
+            for a in a_hrefs:
+                href = a.get("href")
+                if href is None:
+                    continue
+                clean_link = RE_PATTERN_WATCHABLE_LINKS.search(a.get("href"))
+                if clean_link:
+                    video_ids.append(VideoId(clean_link.group(0)))
+        return video_ids
+    except AssertionError as e:
+        if verbose:
+            warnings.warn(f"Error: {e}")
+        raise e
+
+
+def unique_video_ids(video_ids: list[VideoId]) -> list[VideoId]:
+    """Make the video IDs unique."""
+    video_ids_set = set([])
+    unique_video_ids_out = []
+    for video_id in video_ids:
+        if video_id not in video_ids_set:
+            video_ids_set.add(video_id)
+            unique_video_ids_out.append(video_id)
+    return unique_video_ids_out
+
+
+def parse_out_up_next_videos(soup: BeautifulSoup, html: str) -> list[VideoId]:
+    """Parse out the video URL from the up next videos using different methods."""
+    parsers = [
+        lambda: parse_out_up_next_videos_subtype1(soup, verbose=False),
+        lambda: parse_out_up_next_videos_subtype2(soup, verbose=False),
+        lambda: parse_all_watchable_links(html),  # last resort
+    ]
+    errors = []
+    for parser in parsers:
+        try:
+            out = parser()
+            out = unique_video_ids(out)
+            return out
+        except AssertionError as e:
+            errors.append(e)
+        except FeatureNotFound as e:
+            errors.append(e)
+    raise AssertionError(f"Could not parse up next videos: {errors}")
 
 
 def parse_channel_url(html: str) -> ChannelId | None:
@@ -103,15 +183,25 @@ def parse_channel_id2(html: str) -> ChannelId | None:
 
 def parse_title(soup: BeautifulSoup) -> str:
     """Parse the title of the video."""
-    title_div = soup.find("player-microformat-renderer")
-    assert title_div is not None, "Could not find title div."
-    # <script type="application/ld+json">
-    script = title_div.find("script", type="application/ld+json")
-    assert script is not None, "Could not find script tag."
-    json_data = json.loads(script.get_text())
-    title = json_data.get("name")
-    assert title is not None, "Could not find title."
-    return title
+    try:
+        title_div = soup.find("player-microformat-renderer")
+        assert title_div is not None, "Could not find title div."
+        # <script type="application/ld+json">
+        script = title_div.find("script", type="application/ld+json")
+        assert script is not None, "Could not find script tag."
+        json_data = json.loads(script.get_text())
+        title = json_data.get("name")
+        assert title is not None, "Could not find title."
+        return title
+    except AssertionError:
+        # could not find the title from the json, therefore try to find the title
+        # from the <title> tag and remove the " - YouTube" from the end.
+        title = soup.title.string
+        assert title is not None, "Could not find title."
+        return title.replace(" - YouTube", "")
+    except AttributeError as e:
+        warnings.warn(f"Error: {e}")
+        raise e
 
 
 def create_soup(html: str) -> BeautifulSoup:
@@ -128,8 +218,16 @@ def parse_yt_page(html: str) -> YtPage:
     except AssertionError as e:
         warnings.warn(f"Error: {e}")
         title = "Unknown title."
-    video_ids = parse_out_self_video_ids(soup)
-    up_next_video_ids = parse_out_up_next_videos(soup)
+    try:
+        video_ids = parse_out_self_video_ids(soup)
+    except AssertionError as e:
+        warnings.warn(f"Error: {e}")
+        video_ids = []
+    try:
+        up_next_video_ids = parse_out_up_next_videos(soup, html)
+    except AssertionError as e:
+        warnings.warn(f"Error: {e}")
+        raise
     channel_id = parse_channel_url(html)
     return YtPage(
         video_id=video_ids[0] if video_ids else None,
@@ -142,7 +240,7 @@ def parse_yt_page(html: str) -> YtPage:
 def parse_all_watchable_links(html: str) -> list[VideoId]:
     """Parse out all the hrefs from the HTML."""
     # parse out all the hrefs of the vorm watch?v=VIDEO_ID
-    hrefs = re.findall(r"watch\?v=[\w-]+", html)
+    hrefs = re.findall(RE_PATTERN_WATCHABLE_LINKS, html)
     href_set = set([])
     hrefs_out = []
     for href in hrefs:
