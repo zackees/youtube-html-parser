@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 from warnings import warn
 
-from youtube_html_parser.parser import YtPage, parse_yt_page
+from youtube_html_parser.parser import YtPageSearch, parse_yt_page_seach
 
 ENABLE_FETCH_UP_NEXT_VIDEOS = False
 
@@ -22,14 +22,6 @@ TEST_HTML = list(SEARCH_HTML.glob("*.html"))
 TEST_HTML = [file for file in TEST_HTML if not file.name.endswith(".pretty.html")]
 
 
-PROJECT_ROOT = HERE.parent
-
-
-def invoke_parse_py(html: str) -> str:
-    parsed_data = parse_yt_page(html)
-    return parsed_data.serialize()
-
-
 class ParseTester(unittest.TestCase):
     """Main tester class."""
 
@@ -40,7 +32,7 @@ class ParseTester(unittest.TestCase):
             print(f"Testing {test_html.name}")
             html = test_html.read_text(encoding="utf-8")
             try:
-                _: YtPage = parse_yt_page(html)
+                _: YtPageSearch = parse_yt_page_seach(html)
             except Exception as exc:  # pylint: disable=broad-except
                 warn(f"Failed to parse {test_html.name}: {exc}")
                 bad.append(test_html.name)

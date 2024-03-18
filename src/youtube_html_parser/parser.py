@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup, FeatureNotFound
 
 from youtube_html_parser.types import ChannelId, VideoId
 from youtube_html_parser.ytpage import YtPage
+from youtube_html_parser.ytpagesearch import YtPageSearch
 
 
 def parse_out_self_video_ids(soup: BeautifulSoup) -> list[VideoId]:
@@ -141,3 +142,25 @@ def parse_yt_page(html: str) -> YtPage:
         channel_id=channel_id,
         up_next_videos=up_next_videos,
     )
+
+
+def parse_all_watchable_links(html: str) -> list[VideoId]:
+    """Parse out all the hrefs from the HTML."""
+    # parse out all the hrefs of the vorm watch?v=VIDEO_ID
+    hrefs = re.findall(r"watch\?v=[\w-]+", html)
+    href_set = set([])
+    hrefs_out = []
+    for href in hrefs:
+        if href not in href_set:
+            href_set.add(href)
+            hrefs_out.append(href)
+
+    # now remove all watch?v= from the hrefs
+    hrefs_out = [href.replace("watch?v=", "") for href in hrefs_out]
+    return [VideoId(video_id) for video_id in hrefs_out]
+
+
+def parse_yt_page_seach(html: str) -> YtPageSearch:
+    """Parse the YouTube page."""
+    video_ids = parse_all_watchable_links(html)
+    return YtPageSearch(videos=[VideoId(video_id) for video_id in video_ids])
