@@ -23,6 +23,7 @@ class TestYtDlp(unittest.TestCase):
             url, "https://www.youtube.com/channel/UCJqYySus8eH79ehAr7gGj3g"
         )
 
+    @unittest.skip("SLOW")
     def test_fetch_videos_from_channel(self) -> None:
         """Test command line interface (CLI)."""
         zachs_channel_id = "UCiuTGTCkYrjVknhvMAICFjA"

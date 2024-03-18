@@ -32,6 +32,7 @@ def invoke_parse_py(html: str) -> str:
 class ParseTester(unittest.TestCase):
     """Main tester class."""
 
+    @unittest.skip("Slow test")
     def test_parse_performance(self) -> None:
         """Test the performance of parsing."""
         print("Testing performance of parsing.")

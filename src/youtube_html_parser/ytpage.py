@@ -12,24 +12,24 @@ from youtube_html_parser.types import ChannelId, VideoId, channel_to_url, video_
 class YtPage:
     """Dataclass to hold the parsed data."""
 
-    video_id: VideoId
+    video_id: VideoId | None
     title: str
-    channel_id: ChannelId
+    channel_id: ChannelId | None
     up_next_videos: list[VideoId]
 
-    def video_url(self) -> str:
+    def video_url(self) -> str | None:
         """Return the video URL."""
         # return f"https://www.youtube.com/watch?v={self.video_id}"
-        return video_to_url(self.video_id)
+        return video_to_url(self.video_id) if self.video_id else None
 
-    def channel_url(self) -> str:
+    def channel_url(self) -> str | None:
         """Return the channel URL."""
         # return f"https://www.youtube.com/channel/{self.channel_id}"
-        return channel_to_url(self.channel_id)
+        return channel_to_url(self.channel_id) if self.channel_id else None
 
     def up_next_videos_urls(self) -> list[str]:
         """Return the up next videos."""
-        return [video_to_url(video_id) for video_id in self.up_next_videos]
+        return [video_to_url(video_id) for video_id in self.up_next_videos if video_id]
 
     def serialize(self) -> str:
         """Serialize the data."""
