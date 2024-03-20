@@ -31,7 +31,7 @@ def extract_html(infile: Path) -> str:
                 data = gzfile.read()
                 temp_file.write_text(data.decode("utf-8"), encoding="utf-8")
             return temp_file.read_text(encoding="utf-8")
-    raise ValueError(f"Unsupported file type: {infile.suffix} in {infile}.")
+    return infile.read_text(encoding="utf-8")
 
 
 def main() -> int:
