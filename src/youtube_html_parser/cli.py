@@ -5,7 +5,11 @@ Main entry point.
 import sys
 import time
 from argparse import ArgumentParser
+
+# import gunzip
+from gzip import GzipFile
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from youtube_html_parser.parser import (
     YtPage,
@@ -13,6 +17,21 @@ from youtube_html_parser.parser import (
     parse_yt_page,
     parse_yt_page_seach,
 )
+
+
+def extract_html(infile: Path) -> str:
+    """Extract the HTML from the file."""
+    if infile.suffix == ".html":
+        return infile.read_text(encoding="utf-8")
+    if infile.suffix == ".gz":
+        with TemporaryDirectory() as temp_dir:
+            temp_dir_path = Path(temp_dir)
+            temp_file = temp_dir_path / "temp.html"
+            with GzipFile(infile, "r") as gzfile:
+                data = gzfile.read()
+                temp_file.write_text(data.decode("utf-8"), encoding="utf-8")
+            return temp_file.read_text(encoding="utf-8")
+    raise ValueError(f"Unsupported file type: {infile.suffix} in {infile}.")
 
 
 def main() -> int:
@@ -24,7 +43,7 @@ def main() -> int:
     args = parser.parse_args()
     infile = Path(args.input_html)
     outfile = Path(args.output_json)
-    html = infile.read_text(encoding="utf-8")
+    html = extract_html(infile)
     start_time = time.time()
     parsed: YtPage | YtPageSearch
     if args.search:
