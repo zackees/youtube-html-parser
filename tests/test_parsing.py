@@ -25,6 +25,11 @@ TEST_HTML = list(DATA_DIR.glob("*.html"))
 # Filter out *.pretty.html files
 TEST_HTML = [file for file in TEST_HTML if not file.name.endswith(".pretty.html")]
 
+ERROR_FOLDER = DATA_DIR / "error"
+BAD_FILE = ERROR_FOLDER / "yt_14754_20230601004726.html"
+assert ERROR_FOLDER.exists()
+assert BAD_FILE.exists()
+
 
 PROJECT_ROOT = HERE.parent
 
@@ -59,6 +64,22 @@ class ParseTester(unittest.TestCase):
         """Test the parse_yt_page function."""
         test_html = TEST_HTML[0].read_text(encoding="utf-8")
         parsed = parse_yt_page(test_html)
+        self.assertIsInstance(parsed, YtPage)
+        print(parsed)
+        print(parsed.video_url())
+        print(parsed.channel_url())
+        print()
+
+    def test_bad_name_it_up_next_video(self) -> None:
+        """Test the parse_yt_page function."""
+        test_html = BAD_FILE.read_text(encoding="utf-8")
+        parsed = parse_yt_page(test_html)
+        self.assertNotIn(
+            "list=PLKHbLm1qtM-vM_ro6VnhB13WgLIy9LSSI", str(parsed.video_id)
+        )
+
+        for url in parsed.up_next_videos:
+            print(url)
         self.assertIsInstance(parsed, YtPage)
         print(parsed)
         print(parsed.video_url())

@@ -29,6 +29,8 @@ def parse_out_self_video_ids(soup: BeautifulSoup) -> list[VideoId]:
         json_data = json.loads(script.get_text())
         embed_url = json_data.get("embedUrl")
         video_id = embed_url.split("/")[-1]
+        # remove ? and evertyhing after it
+        video_id = video_id.split("?")[0]
         video_ids.append(VideoId(video_id))
     if not video_ids:
         raise AssertionError("Could not find video ID from embedUrl.")
