@@ -14,7 +14,6 @@ from youtube_html_parser.parser import (
     parse_out_up_next_videos,
     parse_yt_page,
 )
-
 from youtube_html_parser.types import VideoId
 
 ENABLE_FETCH_UP_NEXT_VIDEOS = False
@@ -79,9 +78,9 @@ class ParseTester(unittest.TestCase):
         self.assertNotIn(
             "list=PLKHbLm1qtM-vM_ro6VnhB13WgLIy9LSSI", str(parsed.video_id)
         )
-        for id in parsed.up_next_videos:
-            self.assertNotEqual(VideoId("2s"), id)
-            print(id)
+        for vid in parsed.up_next_videos:
+            self.assertNotEqual(VideoId("2s"), vid)
+            print(vid)
         self.assertIsInstance(parsed, YtPage)
         print(parsed)
         print(parsed.video_url())

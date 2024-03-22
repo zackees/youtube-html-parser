@@ -63,7 +63,7 @@ def parse_out_up_next_videos_subtype1(
                 a_tag = item.find("a", {"id": "thumbnail"})
                 assert a_tag is not None, "Could not find a tag."
                 href = a_tag["href"]
-                video_id = href.split("=")[-1]
+                video_id = href.split("&")[0].split("=")[-1]
                 if video_id is not None:
                     video_ids.append(VideoId(video_id))
             except AssertionError as e:
